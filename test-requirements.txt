@@ -1,0 +1,7 @@
+tox
+pytest
+freezegun
+mongomock
+httpx
+faker
+fastapi-another-jwt-auth

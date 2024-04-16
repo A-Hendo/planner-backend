@@ -1,0 +1,8 @@
+setuptools
+ruff
+fastapi
+uvicorn
+mongoengine
+passlib
+fastapi-jwt
+email-validator
