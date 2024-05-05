@@ -3,6 +3,7 @@ from enum import IntEnum, auto
 
 from email_validator import validate_email
 from mongoengine import (
+    BooleanField,
     DateTimeField,
     Document,
     EmailField,
@@ -38,16 +39,16 @@ class User(Document, BasePermissions):
     created = DateTimeField(default=datetime.now())
     updated = DateTimeField(default=datetime.now())
     renewal_date = DateTimeField(default=None)
+    password_expired = BooleanField(default=False)
 
-    def create(user):
-        validated_email = validate_email(user.email, check_deliverability=False)
+    def create(email, username, password):
+        validated_email = validate_email(email, check_deliverability=False)
         email = validated_email.normalized
 
         context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-        password_hash = context.hash(user.password)
+        password_hash = context.hash(password)
 
-        user = User(email=email, username=user.username, password=password_hash).save()
-        print(user.to_json())
+        return User(email=email, username=username, password=password_hash).save()
 
     def permissions(self):
         return BasePermissions(self)

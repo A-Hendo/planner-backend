@@ -3,9 +3,9 @@ from enum import Enum, auto
 
 from mongoengine import (
     DateTimeField,
+    DictField,
     Document,
     EmbeddedDocument,
-    EmbeddedDocumentField,
     EmbeddedDocumentListField,
     EnumField,
     IntField,
@@ -45,16 +45,12 @@ class ActivityLog(EmbeddedDocument):
     amount = IntField(required=True)  # ? minutes?
 
 
-class Group(EmbeddedDocument):
-    name = StringField()
-
-
 class Task(Document):
     """Task Model"""
 
     sid = SequenceField()
     title = StringField(required=True)
-    group = EmbeddedDocumentField(Group, default=None)  # For splitting tasks, eg for backend, frontend, etc
+    group = StringField()  # For splitting tasks, eg for backend, frontend, etc
     type = EnumField(Type, default=Type.TASK)
     description = StringField()
     studio = ReferenceField(Studio, reverse_delete_rule=CASCADE, default=None)
@@ -62,14 +58,14 @@ class Task(Document):
     creation_date = DateTimeField(default=datetime.now())
     updated_date = DateTimeField(default=datetime.now())
     owner = ReferenceField(User, required=True)
-    assigned = ListField(ReferenceField(User), default=None)
+    assigned = ListField(ReferenceField(User), default=[])
     board = ReferenceField(Board, reverse_delete_rule=CASCADE, required=True)
-    dependents = ListField(ReferenceField(User), default=None)
-    estimation = StringField(default=None)  # Change field
+    dependents = ListField(ReferenceField(User), default=[])
+    estimation = DictField(default={})
     comments = EmbeddedDocumentListField(Comment, default=None)
     importance = EnumField(Importance, default=Importance.MEDIUM)
     activity_log = EmbeddedDocumentListField(ActivityLog)
-    time_spent = IntField(default=0)
+    time_spent = DictField(default={})
     state = EnumField(State, default=State.TODO)
 
     @queryset_manager
@@ -84,7 +80,6 @@ class Task(Document):
         return queryset.filter(Q(owner=user) | Q(studio__in=studios) | Q(board__in=boards), *args, **kwargs)
 
     def save(self, *args, **kwargs):
-        board = Board.objects(self.board).first()
-        tasks = Task.objects(board=board)
+        tasks = Task.objects(board=self.board)
         self.sid = len(tasks) + 1
         return super(Task, self).save(*args, **kwargs)

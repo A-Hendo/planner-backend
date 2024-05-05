@@ -1,34 +1,40 @@
 from datetime import datetime
-from enum import Enum
-from typing import Annotated, Any, List, Optional, Union
+from enum import Enum, EnumType
+from typing import Annotated, Any, List, Optional
 
 from bson import ObjectId
-from pydantic import (
-    AfterValidator,
-    BaseModel,
-    EmailStr,
-    PlainSerializer,
-    WithJsonSchema,
-)
+from pydantic import BaseModel, EmailStr
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
 
 from config import Config
 from planner.models.task import Importance, State, Type
 
 
-def validate_object_id(v: Any) -> ObjectId:
-    if isinstance(v, ObjectId):
-        return v
-    if ObjectId.is_valid(v):
-        return ObjectId(v)
-    raise ValueError("Invalid ObjectId")
+class ObjectIdPydanticAnnotation:
+    @classmethod
+    def validate_object_id(cls, v: Any, handler) -> ObjectId:
+        if isinstance(v, ObjectId):
+            return v
 
+        s = handler(v)
+        if ObjectId.is_valid(s):
+            return ObjectId(s)
+        else:
+            raise ValueError("Invalid ObjectId")
 
-PyObjectId = Annotated[
-    Union[str, ObjectId],
-    AfterValidator(validate_object_id),
-    PlainSerializer(lambda x: str(x), return_type=str),
-    WithJsonSchema({"type": "string"}, mode="serialization"),
-]
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type, _handler) -> core_schema.CoreSchema:
+        assert source_type is ObjectId
+        return core_schema.no_info_wrap_validator_function(
+            cls.validate_object_id,
+            core_schema.str_schema(),
+            serialization=core_schema.to_string_ser_schema(),
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, _core_schema, handler) -> JsonSchemaValue:
+        return handler(core_schema.str_schema())
 
 
 class UserBody(BaseModel):
@@ -51,9 +57,8 @@ class UserSettings(BaseModel):
 class UserModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
 
-    _id: PyObjectId
+    id: Annotated[ObjectId, ObjectIdPydanticAnnotation]
     email: EmailStr
     username: str
     type: Enum
@@ -61,14 +66,14 @@ class UserModel(BaseModel):
     created: datetime
     updated: datetime
     renewal_date: datetime | None
+    password_expired: bool
 
 
 class MemberManagerModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
 
-    _id: PyObjectId
+    # id: Annotated[ObjectId, ObjectIdPydanticAnnotation]
     email: EmailStr
     username: str
 
@@ -80,15 +85,25 @@ class StudioSettings(BaseModel):
 class StudioModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
 
-    _id: PyObjectId
+    id: Annotated[ObjectId, ObjectIdPydanticAnnotation]
     name: str
     settings: Optional[StudioSettings]
     created: datetime
     updated: datetime
     owner: UserModel
     active: bool
+
+class PutStudio(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
+    name: str
+    settings: Optional[StudioSettings]
+    active: bool
+
+class PostStudio(BaseModel):
+    name: str
 
 
 class BoardSettings(BaseModel):
@@ -98,9 +113,8 @@ class BoardSettings(BaseModel):
 class BoardModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
 
-    _id: PyObjectId
+    id: Annotated[ObjectId, ObjectIdPydanticAnnotation]
     name: str
     owner: UserModel
     studio: Optional[StudioModel]
@@ -110,29 +124,47 @@ class BoardModel(BaseModel):
     active: bool
 
 
+class PutBoardModel(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
+    name: str
+    settings: Optional[BoardSettings]
+    active: bool
+
+
 class CommentModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
 
-    _id: PyObjectId
+    id: Annotated[ObjectId, ObjectIdPydanticAnnotation]
     owner: UserModel
     body: str
     updated: datetime
     created: datetime
     replies: Optional[List["CommentModel"]] = []
 
+class AllTasks(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
+    id: Annotated[ObjectId, ObjectIdPydanticAnnotation]
+    sid: int
+    title: str
+    type: Type
+    state: State | None = None
+
 
 class TaskModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
 
-    _id: PyObjectId
+    id: Annotated[ObjectId, ObjectIdPydanticAnnotation]
+    sid: int
     title: str
     type: Type
     description: str
-    studio: StudioModel
+    studio: StudioModel | None
     tags: List[str]
     creation_date: datetime
     updated_date: datetime
@@ -140,36 +172,42 @@ class TaskModel(BaseModel):
     assigned: List[UserModel] | None
     board: BoardModel
     dependents: List[UserModel] | None
-    estimation: str | None
+    estimation: dict = {}
     comments: List[CommentModel] | None
     importance: Importance
-    time_spent: int | None
+    time_spent: dict = {}
     state: State | None = None
 
 
 class PostTask(BaseModel):
     title: str
-    type: Type | None = None
+    type: Type = Type.TASK
     description: str | None = None
-    tags: List[str] | None = None
-    assigned: List[UserModel] | None = None
-    dependents: List[UserModel] | None = None
-    estimation: str | None = None
-    importance: Importance | None = None
-    time_spent: int | None = None
-    state: State | None = None
+    tags: List[str] = []
+    assigned: List[UserModel] = []
+    dependents: List[UserModel] = []
+    estimation: dict = {}
+    importance: Importance = Importance.MEDIUM
+    time_spent: dict = {}
+    state: State = State.TODO
 
 
 class PutTask(BaseModel):
+    title: Optional[str] = None
+    type: Optional[Type] = None
+    description: Optional[str] = None
+    tags: Optional[List[str]] = None
+    assigned: Optional[List[EmailStr]] = None
+    dependents: Optional[List[EmailStr]] = None
+    estimation: Optional[dict] = {}
+    importance: Optional[Importance] = None
+    time_spent: Optional[dict] = None
+    state: Optional[State] = None
+
+
+class PatchTask(BaseModel):
     title: str
     type: Type
-    description: str
-    tags: List[str] = []
-    assigned: List[EmailStr] = []
-    dependents: List[EmailStr] = []
-    estimation: str
-    importance: Importance
-    time_spent: int
     state: State
 
 
@@ -189,11 +227,6 @@ class Credentials(BaseModel):
 
 class AccessToken(BaseModel):
     access: str
-
-
-class UserRole(BaseModel):
-    username: str
-    role: int
 
 
 class JWTConfig(BaseModel):

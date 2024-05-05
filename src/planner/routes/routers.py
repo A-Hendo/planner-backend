@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from . import authentication, board, studio, task, user
 
 api_router = APIRouter(
-    prefix="/api/v0",
+    prefix="/v0",
 )
 
 api_router.include_router(user.router)

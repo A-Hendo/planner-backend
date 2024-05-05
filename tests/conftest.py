@@ -25,31 +25,31 @@ pytest.mark.db = pytest.mark.usefixtures("setup_teardown")
 
 @pytest.fixture
 def anon_client():
-    return TestClient(main(), base_url="http://testserver/api/v0")
+    return TestClient(main(), base_url="http://testserver/v0")
 
 
 @pytest.fixture
 def free_client(user):
     access = CustomAuthJWT().create_access_token(subject=user["email"])
-    return TestClient(main(), base_url="http://testserver/api/v0", headers={"Authorization": f"Bearer {access}"})
+    return TestClient(main(), base_url="http://testserver/v0", headers={"Authorization": f"Bearer {access}"})
 
 
 @pytest.fixture
 def member_client(member_user):
     access = CustomAuthJWT().create_access_token(subject=member_user["email"])
-    return TestClient(main(), base_url="http://testserver/api/v0", headers={"Authorization": f"Bearer {access}"})
+    return TestClient(main(), base_url="http://testserver/v0", headers={"Authorization": f"Bearer {access}"})
 
 
 @pytest.fixture
 def manager_client(manager_user):
     access = CustomAuthJWT().create_access_token(subject=manager_user["email"])
-    return TestClient(main(), base_url="http://testserver/api/v0", headers={"Authorization": f"Bearer {access}"})
+    return TestClient(main(), base_url="http://testserver/v0", headers={"Authorization": f"Bearer {access}"})
 
 
 @pytest.fixture
 def owner_client(owner_user):
     access = CustomAuthJWT().create_access_token(subject=owner_user["email"])
-    return TestClient(main(), base_url="http://testserver/api/v0", headers={"Authorization": f"Bearer {access}"})
+    return TestClient(main(), base_url="http://testserver/v0", headers={"Authorization": f"Bearer {access}"})
 
 
 @pytest.fixture

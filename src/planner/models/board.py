@@ -8,6 +8,7 @@ from mongoengine import (
     EmbeddedDocumentField,
     ReferenceField,
     StringField,
+    ImageField,
 )
 from mongoengine.queryset import CASCADE, Q, queryset_manager
 

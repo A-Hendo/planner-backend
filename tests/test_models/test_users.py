@@ -30,7 +30,7 @@ class TestUserModel:
 
     def test_delete_other(self, user, board):
         """Tests when a user is not an owner or member and is deleted that the board is not deleted"""
-        user_two = User(email="this@email.com", password="asdasdds").save()
+        user_two = User.create(email="this@email.com", password="asdasdds", username="user")
         user_two.delete()
 
         count = len(Board.objects())
@@ -38,7 +38,7 @@ class TestUserModel:
 
     def test_delete_studio_member(self, user, studio_board, studio):
         """Tests when a user is a studio member and is deleted that the board is not deleted"""
-        user_two = User(email="this@email.com", password="asdasdds").save()
+        user_two = User.create(email="this@email.com", password="asdasdds", username="user")
         studio.members.append(user_two)
         user_two.delete()
 
@@ -50,7 +50,7 @@ class TestUserModel:
 
     def test_delete_studio_member_task(self, user, studio_board, studio, task):
         """Tests when a user is a studio member and is deleted that the task is not deleted"""
-        user_two = User(email="this@email.com", password="asdasdds").save()
+        user_two = User.create(email="this@email.com", password="asdasdds", username="user")
         studio.members.append(user_two)
         user_two.delete()
 

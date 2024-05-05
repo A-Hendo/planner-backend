@@ -21,9 +21,10 @@ class TestBoard:
 
         assert response.status_code == 401
 
-    # def test_get_all(self, free_client, board):
-    #     response = free_client.get("/board")
-    #     data = response.json()
+    def test_get_all(self, free_client, board):
+        response = free_client.get("/board")
+        data = response.json()
+        print(data)
 
-    #     assert response.status_code == 200
-    #     assert len(data) == 1
+        assert response.status_code == 200
+        assert len(data) == 0

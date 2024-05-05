@@ -35,7 +35,7 @@ class TestStudio:
     def test_owner_not_get(self, owner_client, studio):
         """Tests that a studio owner can not get another studio, when they are
         not a owner, manager or member"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
         studio_one = Studio(name="StudioTwo", owner=user).save()
 
         response = owner_client.get(f"/studio/{studio_one.pk}")
@@ -44,7 +44,7 @@ class TestStudio:
 
     def test_owner_get_all(self, owner_client, studio):
         """Tests that a studio owner can get all studios"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
         Studio(name="StudioTwo", owner=user).save()
 
         response = owner_client.get("/studio")
@@ -67,7 +67,7 @@ class TestStudio:
 
     def test_owner_add_member(self, owner_client, studio):
         """Tests that owners can add members"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
         print(studio.pk)
         response = owner_client.put(f"/studio/{studio.pk}/member", json={"email": user.email})
 
@@ -75,7 +75,7 @@ class TestStudio:
 
     def test_owner_delete_member(self, owner_client, studio):
         """Tests that owners can delete members"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
 
         response = owner_client.put(f"/studio/{studio.pk}/member", json={"email": user.email})
 
@@ -83,7 +83,7 @@ class TestStudio:
 
     def test_owner_add_manager(self, owner_client, studio):
         """Tests that owners can add managers"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
 
         response = owner_client.put(f"/studio/{studio.pk}/manager", json={"email": user.email})
         assert response.status_code == 200
@@ -106,7 +106,7 @@ class TestStudio:
 
     def test_owner_delete_manager(self, owner_client, studio):
         """Tests that owners can delete managers"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
 
         response = owner_client.put(f"/studio/{studio.pk}/member", json={"email": user.email})
 
@@ -114,7 +114,7 @@ class TestStudio:
 
     def test_manager_add_manager(self, manager_client, studio):
         """Tests that managers cannot add managers"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
 
         response = manager_client.put(f"/studio/{studio.pk}/manager", json={"email": user.email})
         studio.reload()
@@ -124,7 +124,7 @@ class TestStudio:
 
     def test_manager_delete_manager(self, manager_client, studio):
         """Tests that managers cannot delete managers"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
         studio.managers.append(user)
         studio.save()
 
@@ -136,7 +136,7 @@ class TestStudio:
 
     def test_member_add_member(self, member_client, studio):
         """Tests that members cannot add members"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
 
         response = member_client.put(f"/studio/{studio.pk}/member", json={"email": user.email})
 
@@ -145,7 +145,7 @@ class TestStudio:
 
     def test_member_delete_member(self, member_client, studio):
         """Tests that members cannot delete members"""
-        user = User(email="email@email.com", password="password").save()
+        user = User.create(email="email@email.com", password="password", username="test")
         studio.members.append(user)
         studio.save()
 

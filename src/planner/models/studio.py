@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from fastapi import status
 from mongoengine import (
     BooleanField,
     DateTimeField,
@@ -12,7 +12,7 @@ from mongoengine import (
 )
 from mongoengine.queryset import CASCADE, Q, queryset_manager
 
-from planner.models.user import User
+from planner.models.user import AccountType, User
 
 
 class Settings(EmbeddedDocument):
@@ -31,8 +31,8 @@ class Studio(Document):
     # ? Deny studio delete when user owner is deleted?
     owner = ReferenceField(User, reverse_delete_rule=CASCADE, required=True)
     active = BooleanField(default=True)
-    managers = ListField(ReferenceField(User))
-    members = ListField(ReferenceField(User))
+    managers = ListField(ReferenceField(User), default=[])
+    members = ListField(ReferenceField(User), default=[])
 
     @queryset_manager
     def objects(doc_cls, queryset, user=None, *args, **kwargs):

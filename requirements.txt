@@ -4,5 +4,7 @@ fastapi
 uvicorn
 mongoengine
 passlib
-fastapi-jwt
 email-validator
+fastapi-filter[all]
+slowapi
+fastapi-another-jwt-auth
